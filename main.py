@@ -89,13 +89,14 @@ def download(url, file_name, file_dir='./downloads/', cookies=COOKIES.copy()):
         'upgrade-insecure-requests': '1',
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36 Edg/105.0.1343.50',
     }
-    start = time.time()
-    response = requests.get(url=url, cookies=cookies, headers=headers, stream=True)
-    # print(response.text)
-    size = 0
-    chunk_size = 1024 # 每次下载的数据大小
-    content_size = int(response.headers['content-length']) # 下载文件总大小
     try:
+        start = time.time()
+        response = requests.get(url=url, cookies=cookies, headers=headers, stream=True)
+        # print(response.text)
+        size = 0
+        chunk_size = 1024 # 每次下载的数据大小
+        content_size = int(response.headers['content-length']) # 下载文件总大小
+    
         if response.status_code == 200: #判断是否响应成功
             print('\tDownload started\n\t[File size]: {size:.2f} MB'.format(size = content_size / chunk_size / 1024))   #开始下载，显示下载文件大小
             with open(file_path,'wb') as f: #显示进度条
