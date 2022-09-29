@@ -110,13 +110,16 @@ def download(url, file_name, file_dir='./downloads/', cookies=COOKIES.copy()):
                         last_time = time.time()
                     MB_speed = speed / chunk_size / 1024
                     if MB_speed >= 1:
-                        print('\r'+'\t[Progress]: %s %.2f%% %.2f MB/s' % ('>' * int(size * 50 / content_size), float(size / content_size * 100), MB_speed), end=' ')
+                        print('\r'+'\t[Progress]: %s %.2f%% %.2f MB/s' % ('>' * int(size * 50 / content_size), float(size / content_size * 100), float(MB_speed)), end=' ')
                     else:
-                        print('\r'+'\t[Progress]: %s %.2f%% %.2f KB/s' % ('>' * int(size * 50 / content_size), float(size / content_size * 100), MB_speed * 1024), end=' ')
+                        print('\r'+'\t[Progress]: %s %.2f%% %.2f KB/s' % ('>' * int(size * 50 / content_size), float(size / content_size * 100), float(MB_speed * 1024)), end=' ')
         end = time.time() # 下载结束时间
         print('\n\tDownload completed!, time: %.2fs' % (end - start)) # 输出下载用时时间
     except Exception as message:
         print('\n\tERROR: %s' %(message))
+        with open('./err.txt', 'a', encoding='utf-8') as f:
+            f.write(file_path)
+            f.write('\t' + message)
 
 def write_data(repo, files_dir, cookies, skip_file = False):
     print('writing data in ' + files_dir)
@@ -207,6 +210,9 @@ def download_all(mode, files_dir='./downloads/', cookies=COOKIES.copy()):
     if mode == 'yaml':
         repo = get_repo_tree(mode=mode, yaml_file='./repo/repo.yaml')
     print('ready')
+    with open('./err.txt', 'w', encoding='utf-8') as f:
+        f.write(time.time())
+
     write_data(repo, files_dir, cookies)
 
 def main():
