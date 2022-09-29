@@ -3,7 +3,7 @@ import os
 import re
 import time
 import yaml
-from lxml import etree
+# from lxml import etree
 COOKIES = {'auth': '1'}
 
 
@@ -108,7 +108,7 @@ def download(url, file_name, file_dir='./downloads/', cookies=COOKIES.copy()):
                     if now_time - last_time > 1 / chunk_size:
                         speed = len(data)/float(now_time-last_time)
                         last_time = time.time()
-                    KB_speed = speed / chunk_size / 1024
+                    MB_speed = speed / chunk_size / 1024
                     if MB_speed >= 1:
                         print('\r'+'\t[Progress]: %s %.2f%% %.2f MB/s' % ('>' * int(size * 50 / content_size), float(size / content_size * 100), MB_speed), end=' ')
                     else:
