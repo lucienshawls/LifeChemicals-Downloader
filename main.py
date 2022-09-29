@@ -120,7 +120,7 @@ def download(url, file_name, file_dir='./downloads/', cookies=COOKIES.copy()):
         print('\n\tERROR: %s' %(str(e)))
         with open('./err.txt', 'a', encoding='utf-8') as f:
             f.write(file_path)
-            f.write('\t' + str(e))
+            f.write('\n\t' + str(e))
             f.write('\n')
 
 def write_data(repo, files_dir, cookies, skip_file = False):
@@ -214,6 +214,7 @@ def download_all(mode, files_dir='./downloads/', cookies=COOKIES.copy()):
     print('ready')
     with open('./err.txt', 'w', encoding='utf-8') as f:
         f.write(str(time.time()))
+        f.write('\n')
 
     write_data(repo, files_dir, cookies)
 
