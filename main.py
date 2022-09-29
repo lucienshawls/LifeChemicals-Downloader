@@ -2,69 +2,13 @@ import requests
 import os
 import re
 import time
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
 import yaml
-# from lxml import etree
 COOKIES = {'auth': '1'}
-
-
-def get_credentials(file_path='credentials.txt'):
-    with open(file_path, 'r', encoding='utf-8') as f:
-        credentials = f.read().strip().split()[:2]
-    return credentials
-
-def login(credentials):
-    s = requests.session()
-    # 访问登录页
-
-    headers = {
-        'authority': 'shop.lifechemicals.com',
-        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-        'accept-language': 'en-US,en;q=0.9',
-        'dnt': '1',
-        'sec-ch-ua': '"Microsoft Edge";v="105", " Not;A Brand";v="99", "Chromium";v="105"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'document',
-        'sec-fetch-mode': 'navigate',
-        'sec-fetch-site': 'none',
-        'sec-fetch-user': '?1',
-        'upgrade-insecure-requests': '1',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36 Edg/105.0.1343.50',
-    }
-
-    response = s.get('https://shop.lifechemicals.com/login?go=https://lifechemicals.com/downloads', headers=headers)
-    # 发送登录请求
-
-    headers = {
-        'authority': 'shop.lifechemicals.com',
-        'accept': 'application/vnd.api+json, application/json',
-        'accept-language': 'en-US,en;q=0.9',
-        'api-key': '68615f7b-8caf-4b8c-9902-c47279bc0e99','dnt': '1',
-        'origin': 'https://shop.lifechemicals.com',
-        'referer': 'https://shop.lifechemicals.com/login?go=https://lifechemicals.com/downloads',
-        'sec-ch-ua': '"Microsoft Edge";v="105", " Not;A Brand";v="99", "Chromium";v="105"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-origin',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36 Edg/105.0.1343.50',
-    }
-
-    json_data = {
-        'email': credentials[0],
-        'password': credentials[1],
-        'session_key': None,
-    }
-
-    response = s.post('https://shop.lifechemicals.com/api/accounts/token/', headers=headers, json=json_data)
-
-    # 访问下载页
-    response = s.get('https://lifechemicals.com/downloads',headers=headers)
-    cookies = response.cookies.get_dict()
-    cookies['pathname'] = '%2Fdownloads'
-    cookies['auth'] = '1'
-    return cookies
+with open('./settings.yaml', 'r', encoding='utf-8') as f:
+    SETTINGS = yaml.load(f, Loader=yaml.Loader)
 
 def download(url, file_name, file_dir='./downloads/', cookies=COOKIES.copy()):
     file_dir.replace('\\', '/')
@@ -149,17 +93,18 @@ def format_str(raw):
     res = re.sub(' [ ]+', ' ', mystr)
     return res
 
-def build_tree(html,root):
+def build_tree(driver, root):
     repo = []
-    cnt = len(html.xpath('%s/li'%(root))) # 所有项目都是li
+    cnt = len(driver.find_elements(by=By.XPATH, value='%s/li'%(root)))
+    # cnt = len(html.xpath('%s/li'%(root))) # 所有项目都是li
     for i in range(1, cnt+1):
         #检查是文件还是文件夹
         sub_root = '%s/li[%s]/ul'%(root,str(i))
         # print(html.xpath(sub_root))
-        if html.xpath(sub_root) == []: 
+        if driver.find_elements(by=By.XPATH, value=sub_root) == []: 
             # file (no /ul) 
-            a_tag_text = html.xpath('%s/li[%s]/a/text()'%(root,str(i)))[0]
-            a_tag_href = html.xpath('%s/li[%s]/a/@href'%(root,str(i)))[0]
+            a_tag_text = driver.find_element(by=By.XPATH, value='%s/li[%s]/a/text()'%(root,str(i)))
+            a_tag_href = driver.find_element(by=By.XPATH, value='%s/li[%s]/a/@href'%(root,str(i)))
             # # print('%s/li[%s]/a/small/text()'%(root,str(i)))
             # small_tag_text = html.xpath('%s/li[%s]/a/small/text()'%(root,str(i)))[0]
             # finfo = format_str(small_tag_text)
@@ -175,48 +120,78 @@ def build_tree(html,root):
             repo.append(item)
         else:
             # repo
-            a_tag_text = html.xpath('%s/li[%s]/a/text()'%(root,str(i)))[0]
+            a_tag_text = driver.find_element(by=By.XPATH, value='%s/li[%s]/a/text()'%(root,str(i)))
             item = {
                 'type': 'repo',
                 'rname': format_str(a_tag_text),
-                'items': build_tree(html, sub_root)
+                'items': build_tree(driver, sub_root)
             }
             repo.append(item)
     return repo
 
-def get_repo_tree(mode, yaml_file='', html_file=''):
-    if mode == 'yaml':
-        with open(yaml_file, 'r', encoding='utf-8') as f:
-            repo = yaml.load(f, Loader=yaml.Loader)
-    elif mode == 'html':
-        with open(html_file, 'r', encoding='utf-8') as f:
-            raw_html = f.read()
-            html = etree.HTML(raw_html)
-        repo = build_tree(html, '//div[@id="downloads_tree"]/ul')
-        if yaml_file != '':
-            with open(yaml_file, 'r', encoding='utf-8') as f:
-                yaml.dump(repo, f, allow_unicode=True, sort_keys=False)
-    elif mode == selenium:
-        repo = []
+def driver_init(myoption):
+    if myoption['browser'] == 'chrome':
+        options = webdriver.ChromeOptions()
+    elif myoption['browser'] == 'edge':
+        options = webdriver.EdgeOptions()
+    for i in myoption['options']:
+        options.add_argument(i)
+    # options.add_experimental_option('detach',True) # 程序结束后保留浏览器窗口
+    options.add_experimental_option('excludeSwitches',['enable-logging']) # 关闭selenium控制台提示
+    if myoption['driver_path'] == '':
+        # 应用选项
+        if myoption['browser'] == 'chrome':
+            driver = webdriver.Chrome(options=options)
+        elif myoption['browser'] == 'edge':
+            driver = webdriver.Edge(options=options)
     else:
-        repo = []
+        driver_service = Service(myoption['driver_path'])
+        if myoption['browser'] == 'chrome':
+            driver = webdriver.Chrome(service=driver_service, options=options)
+        elif myoption['browser'] == 'edge':
+            driver = webdriver.Edge(service=driver_service, options=options)
+
+    driver.implicitly_wait(12)
+    driver.maximize_window() # 最大化
+    driver.get('https://lifechemicals.com/downloads') # 首页
+    return driver
+
+def get_repo_tree(repo_tree_file=''):
+    if os.path.exist(repo_tree_file):
+        with open(repo_tree_file, 'r', encoding='utf-8') as f:
+            repo = yaml.load(f, Loader=yaml.Loader)
+    else:
+        # selenium
+        driver = driver_init(SETTINGS['driver'])
+        repo = build_tree(driver, '//div[@id="downloads_tree"]/ul')
+        try:
+            if not os.path.exist(os.path.dirname(repo_tree_file)):
+                os.mkdir(os.path.dirname(repo_tree_file))
+            with open(repo_tree_file, 'r', encoding='utf-8') as f:
+                yaml.dump(repo, f, allow_unicode=True, sort_keys=False)
+        except:
+            print('WARNING: repo_tree_file not writable (%s)' %(repo_tree_file))
     return repo
 
-def download_all(mode, files_dir='./downloads/', cookies=COOKIES.copy()):
-    files_dir.replace('\\', '/')
-    if files_dir[-1] != '/':
-        files_dir += '/'
-    if not os.path.exists(files_dir):
-        os.mkdir(files_dir)
+def download_all(mode, save_dir='./downloads/', cookies=COOKIES.copy()):
+    save_dir.replace('\\', '/')
+    if save_dir[-1] != '/':
+        save_dir += '/'
+    if not os.path.exists(save_dir):
+        os.mkdir(save_dir)
     
-    if mode == 'yaml':
-        repo = get_repo_tree(mode=mode, yaml_file='./repo/repo.yaml')
-    print('ready')
-    with open('./err.txt', 'w', encoding='utf-8') as f:
-        f.write(str(time.time()))
-        f.write('\n')
+    repo = get_repo_tree(repo_tree_file=SETTINGS['runtime']['repo_tree_file'])
+    print('repo tree ready')
 
-    write_data(repo, files_dir, cookies)
+    if SETTINGS['download']['enable']:
+        with open('./err.txt', 'w', encoding='utf-8') as f:
+            from datetime import datetime
+            f.write(str(datetime.now()))
+            f.write('\n')
+
+        write_data(repo, files_dir, cookies)
+    else:
+        print('download not enabled')
 
 def main():
     # cookies = login(get_credentials()) 

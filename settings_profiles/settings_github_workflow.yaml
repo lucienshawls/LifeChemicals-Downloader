@@ -1,0 +1,15 @@
+driver:
+  browser: 'chrome'
+  driver_path: '/usr/bin/chromedriver'
+  options:
+  - '--no-sandbox'
+  - '--disable-dev-shm-usage'
+  - '--disable-gpu'
+  - 'blink-settings=imagesEnabled=false'
+  - '--headless'
+  - 'window-size=1920x1080'
+runtime:
+  repo_tree_file: './repo/repo.yaml'
+download:
+  enable: true
+  save_dir: './downloads/'
