@@ -114,9 +114,9 @@ def download(url, file_name, file_dir='./downloads/', cookies=COOKIES.copy()):
                     else:
                         print('\r'+'\t[Progress]: %s %.2f%% %.2f KB/s' % ('>' * int(size * 50 / content_size), float(size / content_size * 100), MB_speed * 1024), end=' ')
         end = time.time() # 下载结束时间
-        print('Download completed!, time: %.2fs' % (end - start)) # 输出下载用时时间
-    except:
-        print('Error')
+        print('\n\tDownload completed!, time: %.2fs' % (end - start)) # 输出下载用时时间
+    except Exception as message:
+        print('\n\tERROR: %s' %(message))
 
 def write_data(repo, files_dir, cookies, skip_file = False):
     print('writing data in ' + files_dir)
@@ -124,7 +124,12 @@ def write_data(repo, files_dir, cookies, skip_file = False):
         if item['type'] == 'file':
             fname = item['fname']
             dlink = item['dlink']
-            print('writing file: %s' %(files_dir + fname))
+            file_path = files_dir + fname
+            if skip_file:
+                if os.path.exists(file_path):
+                    print('skipping file: %s' %(file_path))
+                    continue
+            print('writing file: %s' %(file_path))
             download(dlink, fname, files_dir, cookies)
         else:
             rname = item['rname']
