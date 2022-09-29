@@ -211,7 +211,7 @@ def download_all(mode, files_dir='./downloads/', cookies=COOKIES.copy()):
         repo = get_repo_tree(mode=mode, yaml_file='./repo/repo.yaml')
     print('ready')
     with open('./err.txt', 'w', encoding='utf-8') as f:
-        f.write(time.time())
+        f.write(str(time.time()))
 
     write_data(repo, files_dir, cookies)
 
