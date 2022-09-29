@@ -116,11 +116,11 @@ def download(url, file_name, file_dir='./downloads/', cookies=COOKIES.copy()):
                         print('\r'+'\t[Progress]: %s %.2f%% %.2f KB/s' % ('>' * int(size * 50 / content_size), float(size / content_size * 100), float(MB_speed * 1024)), end=' ')
         end = time.time() # 下载结束时间
         print('\n\tDownload completed!, time: %.2fs' % (end - start)) # 输出下载用时时间
-    except Exception as message:
-        print('\n\tERROR: %s' %(message))
+    except Exception as e:
+        print('\n\tERROR: %s' %(e.message))
         with open('./err.txt', 'a', encoding='utf-8') as f:
             f.write(file_path)
-            f.write('\t' + message)
+            f.write('\t' + e.message)
 
 def write_data(repo, files_dir, cookies, skip_file = False):
     print('writing data in ' + files_dir)
