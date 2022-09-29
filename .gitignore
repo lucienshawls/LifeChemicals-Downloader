@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 credentials.txt
 downloads/
+tests/
 
 # C extensions
 *.so
