@@ -173,12 +173,15 @@ def get_repo_tree(repo_tree_file=''):
             print('WARNING: repo_tree_file not writable (%s)' %(repo_tree_file))
     return repo
 
-def download_all(mode, save_dir='./downloads/', cookies=COOKIES.copy()):
-    save_dir.replace('\\', '/')
-    if save_dir[-1] != '/':
-        save_dir += '/'
-    if not os.path.exists(save_dir):
-        os.mkdir(save_dir)
+def download_all(save_dir='./downloads/', cookies=COOKIES.copy()):
+    try:
+        save_dir.replace('\\', '/')
+        if save_dir[-1] != '/':
+            save_dir += '/'
+        if not os.path.exists(save_dir):
+            os.mkdir(save_dir)
+    except:
+        print('WARNING: save_dir not writable (%s)' %(save_dir))
     
     repo = get_repo_tree(repo_tree_file=SETTINGS['runtime']['repo_tree_file'])
     print('repo tree ready')
@@ -189,13 +192,13 @@ def download_all(mode, save_dir='./downloads/', cookies=COOKIES.copy()):
             f.write(str(datetime.now()))
             f.write('\n')
 
-        write_data(repo, files_dir, cookies)
+        write_data(repo, save_dir, cookies)
     else:
         print('download not enabled')
 
 def main():
     # cookies = login(get_credentials()) 
-    download_all(mode='yaml')
+    download_all(save_dir=SETTINGS['download']['save_dir'])
 
 if __name__ == '__main__':
     main()
