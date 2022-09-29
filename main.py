@@ -94,6 +94,7 @@ def format_str(raw):
     return res
 
 def build_tree(driver, root):
+    print(root)
     repo = []
     cnt = len(driver.find_elements(by=By.XPATH, value='%s/li'%(root)))
     # cnt = len(html.xpath('%s/li'%(root))) # 所有项目都是li
@@ -102,25 +103,25 @@ def build_tree(driver, root):
         sub_root = '%s/li[%s]/ul'%(root,str(i))
         # print(html.xpath(sub_root))
         if driver.find_elements(by=By.XPATH, value=sub_root) == []: 
-            # file (no /ul) 
-            a_tag_text = driver.find_element(by=By.XPATH, value='%s/li[%s]/a/text()'%(root,str(i)))
-            a_tag_href = driver.find_element(by=By.XPATH, value='%s/li[%s]/a/@href'%(root,str(i)))
-            # # print('%s/li[%s]/a/small/text()'%(root,str(i)))
-            # small_tag_text = html.xpath('%s/li[%s]/a/small/text()'%(root,str(i)))[0]
-            # finfo = format_str(small_tag_text)
-            # fsize = re.search('| size: (.*) |', finfo).group(1)
-            # fdate = re.search('| updated: (.*) |', finfo).group(1)
+            # file (no /ul)
+            a_tag = driver.find_element(by=By.XPATH, value='%s/li[%s]/a'%(root,str(i)))
+            a_tag_text = a_tag.text
+            a_tag_href = a_tag.get_attribute('href')
+            finfo = format_str(a_tag_text)
+            fname = re.match('(.*) \| size', finfo).group(1)
+            fsize = re.search('\| size: (.*) \| updated', finfo).group(1)
+            fdate = re.search('\| updated: (.*) \|', finfo).group(1)
             item = {
                 'type': 'file',
-                'fname': format_str(a_tag_text),
+                'fname': fname,
                 'dlink': format_str(a_tag_href),
-                # 'fsize': fsize,
-                # 'fdate': fdate
+                'fsize': fsize,
+                'fdate': fdate
             }
             repo.append(item)
         else:
             # repo
-            a_tag_text = driver.find_element(by=By.XPATH, value='%s/li[%s]/a/text()'%(root,str(i)))
+            a_tag_text = driver.find_element(by=By.XPATH, value='%s/li[%s]/a'%(root,str(i))).text
             item = {
                 'type': 'repo',
                 'rname': format_str(a_tag_text),
@@ -151,23 +152,24 @@ def driver_init(myoption):
         elif myoption['browser'] == 'edge':
             driver = webdriver.Edge(service=driver_service, options=options)
 
-    driver.implicitly_wait(12)
+    driver.implicitly_wait(4)
     driver.maximize_window() # 最大化
     driver.get('https://lifechemicals.com/downloads') # 首页
     return driver
 
 def get_repo_tree(repo_tree_file=''):
-    if os.path.exist(repo_tree_file):
+    if os.path.exists(repo_tree_file):
         with open(repo_tree_file, 'r', encoding='utf-8') as f:
             repo = yaml.load(f, Loader=yaml.Loader)
     else:
         # selenium
         driver = driver_init(SETTINGS['driver'])
+        driver.find_element(by=By.ID, value='open-all').click()
         repo = build_tree(driver, '//div[@id="downloads_tree"]/ul')
         try:
-            if not os.path.exist(os.path.dirname(repo_tree_file)):
+            if not os.path.exists(os.path.dirname(repo_tree_file)):
                 os.mkdir(os.path.dirname(repo_tree_file))
-            with open(repo_tree_file, 'r', encoding='utf-8') as f:
+            with open(repo_tree_file, 'w', encoding='utf-8') as f:
                 yaml.dump(repo, f, allow_unicode=True, sort_keys=False)
         except:
             print('WARNING: repo_tree_file not writable (%s)' %(repo_tree_file))
