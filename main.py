@@ -93,12 +93,12 @@ def download(url, file_name, file_dir='./downloads/', cookies=COOKIES.copy()):
     response = requests.get(url=url, cookies=cookies, headers=headers, stream=True)
     # print(response.text)
     size = 0
-    chunk_size = 1024  # 每次下载的数据大小
-    content_size = int(response.headers['content-length'])  # 下载文件总大小
+    chunk_size = 1024 # 每次下载的数据大小
+    content_size = int(response.headers['content-length']) # 下载文件总大小
     try:
-        if response.status_code == 200:   #判断是否响应成功
+        if response.status_code == 200: #判断是否响应成功
             print('\tDownload started\n\t[File size]: {size:.2f} MB'.format(size = content_size / chunk_size / 1024))   #开始下载，显示下载文件大小
-            with open(file_path,'wb') as f:   #显示进度条
+            with open(file_path,'wb') as f: #显示进度条
                 last_time = time.time()
                 speed = 0
                 for data in response.iter_content(chunk_size = chunk_size):
@@ -108,13 +108,13 @@ def download(url, file_name, file_dir='./downloads/', cookies=COOKIES.copy()):
                     if now_time - last_time > 1 / chunk_size:
                         speed = len(data)/float(now_time-last_time)
                         last_time = time.time()
-                    MB_speed = speed / chunk_size / 1024
+                    KB_speed = speed / chunk_size / 1024
                     if MB_speed >= 1:
-                        print('\r'+'\t[Progress]: %s %.2f%% %.2f MB/s' % ('>' * int(size*50 / content_size), float(size / content_size * 100), MB_speed), end=' ')
+                        print('\r'+'\t[Progress]: %s %.2f%% %.2f MB/s' % ('>' * int(size * 50 / content_size), float(size / content_size * 100), MB_speed), end=' ')
                     else:
-                        print('\r'+'\t[Progress]: %s %.2f%% %.2f KB/s' % ('>' * int(size*50 / content_size), float(size / content_size * 100), MB_speed * 1024), end=' ')
-        end = time.time()   #下载结束时间
-        print('Download completed!, time: %.2fs' % (end - start))  #输出下载用时时间
+                        print('\r'+'\t[Progress]: %s %.2f%% %.2f KB/s' % ('>' * int(size * 50 / content_size), float(size / content_size * 100), MB_speed * 1024), end=' ')
+        end = time.time() # 下载结束时间
+        print('Download completed!, time: %.2fs' % (end - start)) # 输出下载用时时间
     except:
         print('Error')
 
