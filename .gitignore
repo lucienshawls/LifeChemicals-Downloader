@@ -1,10 +1,7 @@
 # User defined
 credentials.txt
-downloads/
+data/
 tests/
-html/
-repo/
-err.txt
 settings.yaml
 
 # Byte-compiled / optimized / DLL files
