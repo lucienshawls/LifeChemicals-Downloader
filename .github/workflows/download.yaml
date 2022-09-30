@@ -29,9 +29,6 @@ jobs:
     - name: Check repository tree file
       run: |
         cat ./data/repo.yaml
-    - name: Zip Files
-      run: |
-        zip -r ./data.zip ./data
     - name: Upload repository tree file
       uses: actions/upload-artifact@v3
       with:
@@ -41,4 +38,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: data
-        path: ./data.zip
+        path: ./data
