@@ -19,7 +19,7 @@ jobs:
         cp ./settings_profiles/settings_github_workflow.yaml ./settings.yaml
     - name: Fetch
       run: |
-        python ./main.py > ./runtime_log.txt
+        python ./main.py
     # - name: Check runtime
     #   run: |
     #     cat ./runtime_log.txt
