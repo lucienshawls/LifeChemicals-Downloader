@@ -87,7 +87,7 @@ def download(url, file_name, file_dir='./downloads/', cookies=COOKIES.copy()):
         print('\n\tDownload completed!, time: %.2fs' % (end - start)) # 输出下载用时时间
     except Exception as e:
         print('\n\tERROR: %s' %(str(e)))
-        with open('./log.txt', 'a', encoding='utf-8') as f:
+        with open('%slog.txt' %(SETTINGS['runtime']['job_dir']), 'a', encoding='utf-8') as f:
             f.write(os.path.dirname(os.path.abspath(file_path)))
             f.write('\n\t' + os.path.abspath(file_path))
             f.write('\n\t' + str(e))
