@@ -6,7 +6,8 @@ jobs:
     name: Fetch and Download
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout source
+      uses: actions/checkout@v2
     - name: Set up Python 3.10
       uses: actions/setup-python@v2
       with: 
@@ -26,7 +27,7 @@ jobs:
       run: |
         zip -r ./data.zip ./data
     - name: Upload
-    - uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v3
       with:
         name: data
         path: ./data.zip
