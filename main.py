@@ -88,7 +88,8 @@ def download(url, file_name, file_dir='./downloads/', cookies=COOKIES.copy()):
     except Exception as e:
         print('\n\tERROR: %s' %(str(e)))
         with open('./log.txt', 'a', encoding='utf-8') as f:
-            f.write(file_path)
+            f.write(os.path.dirname(os.path.abspath(file_path)))
+            f.write('\n\t' + os.path.abspath(file_path))
             f.write('\n\t' + str(e))
             f.write('\n')
 
