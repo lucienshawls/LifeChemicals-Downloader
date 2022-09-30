@@ -1,0 +1,18 @@
+driver:
+  browser: 'chrome'
+  driver_path: '/usr/bin/chromedriver'
+  options:
+  - '--no-sandbox'
+  - '--disable-dev-shm-usage'
+  - '--disable-gpu'
+  - 'blink-settings=imagesEnabled=false'
+  - '--headless'
+  - 'window-size=1920x1080'
+runtime:
+  job_name: ''
+repo_tree:
+  remote_fetch: true
+  job_specified: false
+downloads:
+  remote_fetch: true
+  job_specified: false

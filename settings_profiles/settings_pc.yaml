@@ -1,0 +1,14 @@
+driver:
+  browser: 'edge'
+  driver_path: ''
+  options:
+  - '--headless'
+  - 'window-size=1920x1080'
+runtime:
+  job_name: ''
+repo_tree:
+  remote_fetch: true
+  job_specified: true
+downloads:
+  remote_fetch: true
+  job_specified: true
