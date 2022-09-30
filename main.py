@@ -90,6 +90,7 @@ def download(url, file_name, file_dir='./downloads/', cookies=COOKIES.copy()):
         with open('%slog.txt' %(SETTINGS['runtime']['job_dir']), 'a', encoding='utf-8') as f:
             f.write(os.path.dirname(os.path.abspath(file_path)))
             f.write('\n\t' + os.path.abspath(file_path))
+            f.write('\n\t' + file_name)
             f.write('\n\t' + str(e))
             f.write('\n')
 
