@@ -26,10 +26,7 @@ jobs:
       run: |
         zip -r ./data.zip ./data
     - name: Upload
-      env:
-        PRIVATE_KEY: ${{ secrets.ID_RSA_LS }}
-      run: |
-        echo "$PRIVATE_KEY" >> ./id_rsa_ls
-        chmod 600 ./id_rsa_ls
-        scp -P 14122 -i ./id_rsa_ls -o StrictHostKeyChecking=no ./data.zip root@hwpo.top:/home/wwwroot/drive/data/lucien/files/clash/public/
-        echo "download at: https://drive.hwpo.top/s/Gq88PciGDpRR4Yq"
+    - uses: actions/upload-artifact@v3
+      with:
+        name: data
+        path: ./data.zip
