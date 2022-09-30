@@ -2,13 +2,38 @@ import requests
 import os
 import re
 import time
+import datetime
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 import yaml
 COOKIES = {'auth': '1'}
-with open('./settings.yaml', 'r', encoding='utf-8') as f:
-    SETTINGS = yaml.load(f, Loader=yaml.Loader)
+REPO_HREF = 'https://lifechemicals.com/#'
+JOB_ROOT = './data/'
+SETTINGS = {}
+
+def init(settings_file='./settings.yaml'):
+    global SETTINGS
+    with open(settings_file, 'r', encoding='utf-8') as f:
+        SETTINGS = yaml.load(f, Loader=yaml.Loader)
+
+    if SETTINGS['repo_tree']['job_specified'] or SETTINGS['downloads']['job_specified']:
+        if SETTINGS['runtime']['job_name'] == '':
+            job_name = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        else:
+            job_name = SETTINGS['runtime']['job_name'].replace('\\','/').replace('/','_')
+        job_name += '/'
+    else:
+        job_name = ''
+    SETTINGS['runtime']['job_dir'] = '%s%s' %(JOB_ROOT, job_name)
+    SETTINGS['repo_tree']['file_path'] = '%s%srepo.yaml' %(JOB_ROOT, job_name)
+    SETTINGS['downloads']['save_dir'] = '%s%sdownloads/' %(JOB_ROOT, job_name)
+    if not os.path.exists(JOB_ROOT):
+        os.mkdir(JOB_ROOT)
+    if not os.path.exists(SETTINGS['runtime']['job_dir']):
+        os.mkdir(SETTINGS['runtime']['job_dir'])
+    if not os.path.exists(SETTINGS['downloads']['save_dir']):
+        os.mkdir(SETTINGS['downloads']['save_dir'])
 
 def download(url, file_name, file_dir='./downloads/', cookies=COOKIES.copy()):
     file_dir.replace('\\', '/')
@@ -62,7 +87,7 @@ def download(url, file_name, file_dir='./downloads/', cookies=COOKIES.copy()):
         print('\n\tDownload completed!, time: %.2fs' % (end - start)) # 输出下载用时时间
     except Exception as e:
         print('\n\tERROR: %s' %(str(e)))
-        with open('./err.txt', 'a', encoding='utf-8') as f:
+        with open('./log.txt', 'a', encoding='utf-8') as f:
             f.write(file_path)
             f.write('\n\t' + str(e))
             f.write('\n')
@@ -94,37 +119,34 @@ def format_str(raw):
     return res
 
 def build_tree(driver, root):
-    print(root)
     repo = []
     cnt = len(driver.find_elements(by=By.XPATH, value='%s/li'%(root)))
-    # cnt = len(html.xpath('%s/li'%(root))) # 所有项目都是li
     for i in range(1, cnt+1):
-        #检查是文件还是文件夹
+        # file or repo
         sub_root = '%s/li[%s]/ul'%(root,str(i))
-        # print(html.xpath(sub_root))
-        if driver.find_elements(by=By.XPATH, value=sub_root) == []: 
-            # file (no /ul)
-            a_tag = driver.find_element(by=By.XPATH, value='%s/li[%s]/a'%(root,str(i)))
-            a_tag_text = a_tag.text
-            a_tag_href = a_tag.get_attribute('href')
-            finfo = format_str(a_tag_text)
+        a_tag = driver.find_element(by=By.XPATH, value='%s/li[%s]/a'%(root,str(i)))
+        a_tag_text = format_str(a_tag.text)
+        a_tag_href = format_str(a_tag.get_attribute('href'))
+        if a_tag_href != REPO_HREF:
+            # file
+            finfo = a_tag_text
             fname = re.match('(.*) \| size', finfo).group(1)
             fsize = re.search('\| size: (.*) \| updated', finfo).group(1)
             fdate = re.search('\| updated: (.*) \|', finfo).group(1)
             item = {
                 'type': 'file',
                 'fname': fname,
-                'dlink': format_str(a_tag_href),
+                'dlink': a_tag_href,
                 'fsize': fsize,
                 'fdate': fdate
             }
             repo.append(item)
         else:
             # repo
-            a_tag_text = driver.find_element(by=By.XPATH, value='%s/li[%s]/a'%(root,str(i))).text
+            rname = a_tag_text
             item = {
                 'type': 'repo',
-                'rname': format_str(a_tag_text),
+                'rname': rname,
                 'items': build_tree(driver, sub_root)
             }
             repo.append(item)
@@ -140,7 +162,7 @@ def driver_init(myoption):
     # options.add_experimental_option('detach',True) # 程序结束后保留浏览器窗口
     options.add_experimental_option('excludeSwitches',['enable-logging']) # 关闭selenium控制台提示
     if myoption['driver_path'] == '':
-        # 应用选项
+        # apply options
         if myoption['browser'] == 'chrome':
             driver = webdriver.Chrome(options=options)
         elif myoption['browser'] == 'edge':
@@ -153,54 +175,43 @@ def driver_init(myoption):
             driver = webdriver.Edge(service=driver_service, options=options)
 
     driver.implicitly_wait(4)
-    driver.maximize_window() # 最大化
-    driver.get('https://lifechemicals.com/downloads') # 首页
+    driver.maximize_window() # maximize
+    driver.get('https://lifechemicals.com/downloads')
     return driver
 
-def get_repo_tree(repo_tree_file=''):
-    if os.path.exists(repo_tree_file):
+def get_repo_tree(repo_tree_file):
+    if (not SETTINGS['repo_tree']['remote_fetch']) and os.path.exists(repo_tree_file):
         with open(repo_tree_file, 'r', encoding='utf-8') as f:
             repo = yaml.load(f, Loader=yaml.Loader)
     else:
-        # selenium
+        print('fetching repo tree from remote')
         driver = driver_init(SETTINGS['driver'])
         driver.find_element(by=By.ID, value='open-all').click()
+        print('download page loaded')
         repo = build_tree(driver, '//div[@id="downloads_tree"]/ul')
         try:
-            if not os.path.exists(os.path.dirname(repo_tree_file)):
-                os.mkdir(os.path.dirname(repo_tree_file))
             with open(repo_tree_file, 'w', encoding='utf-8') as f:
                 yaml.dump(repo, f, allow_unicode=True, sort_keys=False)
-        except:
-            print('WARNING: repo_tree_file not writable (%s)' %(repo_tree_file))
+        except Exception as e:
+            print('WARNING: repo_tree_file (%s) not writable: %s' %(repo_tree_file, str(e)))
     return repo
 
-def download_all(save_dir='./downloads/', cookies=COOKIES.copy()):
-    try:
-        save_dir.replace('\\', '/')
-        if save_dir[-1] != '/':
-            save_dir += '/'
-        if not os.path.exists(save_dir):
-            os.mkdir(save_dir)
-    except:
-        print('WARNING: save_dir not writable (%s)' %(save_dir))
-    
-    repo = get_repo_tree(repo_tree_file=SETTINGS['runtime']['repo_tree_file'])
+def download_all(save_dir, cookies=COOKIES.copy()):
+    repo = get_repo_tree(repo_tree_file=SETTINGS['repo_tree']['file_path'])
     print('repo tree ready')
 
-    if SETTINGS['download']['enable']:
-        with open('./err.txt', 'w', encoding='utf-8') as f:
+    if SETTINGS['downloads']['remote_fetch']:
+        with open('%slog.txt' %(SETTINGS['runtime']['job_dir']), 'w', encoding='utf-8') as f:
             from datetime import datetime
             f.write(str(datetime.now()))
             f.write('\n')
-
         write_data(repo, save_dir, cookies)
     else:
-        print('download not enabled')
+        print('remote fetch disabled in settings')
 
 def main():
-    # cookies = login(get_credentials()) 
-    download_all(save_dir=SETTINGS['download']['save_dir'])
+    init()
+    download_all(save_dir=SETTINGS['downloads']['save_dir'])
 
 if __name__ == '__main__':
     main()
