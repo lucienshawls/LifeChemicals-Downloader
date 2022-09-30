@@ -26,10 +26,18 @@ jobs:
     - name: Check errors
       run: |
         cat ./data/log.txt
+    - name: Check repository tree file
+      run: |
+        cat ./data/repo.yaml
     - name: Zip Files
       run: |
         zip -r ./data.zip ./data
-    - name: Upload
+    - name: Upload repository tree file
+      uses: actions/upload-artifact@v3
+      with:
+        name: repo
+        path: ./data/repo.yaml
+    - name: Upload data
       uses: actions/upload-artifact@v3
       with:
         name: data
