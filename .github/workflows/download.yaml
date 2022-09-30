@@ -19,6 +19,9 @@ jobs:
     - name: Fetch
       run: |
         python ./main.py
+    - name: Check
+      run: |
+        cat ./data/log.txt
     - name: Zip Files
       run: |
         zip -r ./data.zip ./data
