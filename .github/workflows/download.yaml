@@ -26,9 +26,16 @@ jobs:
     - name: Check errors
       run: |
         cat ./data/log.txt
+    - name: Zip files (temporary)
+      run: |
+        zip -r ./downloads.zip ./data/downloads
     - name: Check repository tree file
       run: |
         cat ./data/repo.yaml
+    - name: Check MD5
+      run: |
+        md5sum -b ./data/repo.yaml
+        md5sum -b ./downloads.zip
     - name: Upload repository tree file
       uses: actions/upload-artifact@v3
       with:
