@@ -77,7 +77,7 @@ def download(url, file_name, file_dir='./downloads/', cookies=COOKIES.copy()):
                     f.write(data)
                     size += len(data)
                     delta_size += len(data)
-                    if now_time - last_time >= 1:
+                    if now_time - last_time >= 1 or float(size / content_size) >= 1:
                         speed = delta_size/float(now_time-last_time)
                         last_time = time.time()
                         delta_size = 0
