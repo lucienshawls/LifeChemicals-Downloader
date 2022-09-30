@@ -71,18 +71,21 @@ def download(url, file_name, file_dir='./downloads/', cookies=COOKIES.copy()):
             with open(file_path,'wb') as f: #显示进度条
                 last_time = time.time()
                 speed = 0
+                delta_size = 0
                 for data in response.iter_content(chunk_size = chunk_size):
                     now_time = time.time()
                     f.write(data)
                     size += len(data)
-                    if now_time - last_time > 1 / chunk_size:
-                        speed = len(data)/float(now_time-last_time)
+                    delta_size += len(data)
+                    if now_time - last_time >= 1:
+                        speed = delta_size/float(now_time-last_time)
                         last_time = time.time()
-                    MB_speed = speed / chunk_size / 1024
-                    if MB_speed >= 1:
-                        print('\r'+'\t[Progress]: %s %.2f%% %.2f MB/s' % ('>' * int(size * 50 / content_size), float(size / content_size * 100), float(MB_speed)), end=' ')
-                    else:
-                        print('\r'+'\t[Progress]: %s %.2f%% %.2f KB/s' % ('>' * int(size * 50 / content_size), float(size / content_size * 100), float(MB_speed * 1024)), end=' ')
+                        delta_size = 0
+                        MB_speed = speed / chunk_size / 1024
+                        if MB_speed >= 1:
+                            print('\r'+'\t[Progress]: %s %.2f%% %.2f MB/s' % ('>' * int(size * 50 / content_size), float(size / content_size * 100), float(MB_speed)), end=' ')
+                        else:
+                            print('\r'+'\t[Progress]: %s %.2f%% %.2f KB/s' % ('>' * int(size * 50 / content_size), float(size / content_size * 100), float(MB_speed * 1024)), end=' ')
         end = time.time() # 下载结束时间
         print('\n\tDownload completed!, time: %.2fs' % (end - start)) # 输出下载用时时间
     except Exception as e:
