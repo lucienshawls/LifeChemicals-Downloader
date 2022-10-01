@@ -26,16 +26,16 @@ jobs:
     - name: Check errors
       run: |
         cat ./data/log.txt
-    - name: Zip files (temporary)
+    - name: Create a tape archive temporarily for md5sum checks
       run: |
-        zip -r ./downloads.zip ./data/downloads
+        tar -cvf ./downloads.tar ./data/downloads
     - name: Check repository tree file
       run: |
         cat ./data/repo.yaml
-    - name: Check MD5
+    - name: Check md5sum
       run: |
         md5sum -b ./data/repo.yaml
-        md5sum -b ./downloads.zip
+        md5sum -b ./downloads.tar
     - name: Upload repository tree file
       uses: actions/upload-artifact@v3
       with:
